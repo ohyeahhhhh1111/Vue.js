@@ -10,8 +10,12 @@
     <div id="app1">
         <header>
             <h1>{{ sitename }}</h1>
-            <button v-on:click="showCheckout">
+            <button v-on:click="showCheckout" v-if="canShoppingCart()">
                 {{ cartItemCount }}
+                <span class="fas fa-cart-plus"></span>
+                Shopping Cart
+            </button>
+            <button disabled="disabled" v-else>
                 <span class="fas fa-cart-plus"></span>
                 Shopping Cart
             </button>
@@ -124,7 +128,8 @@
                     zip: '',
                     state: '',
                     method: 'Home',
-                    gift: false
+                    gift: false,
+                    products: {},
                 },
                 states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
                 products: [], 
@@ -159,10 +164,19 @@
                 },
                 addToCart(product) {
                     this.cart.push(product.id);
-                    product.space--; 
+                    if (!this.order.products.hasOwnProperty(product.id)) {
+                        this.order.products[product.id] = 1
+                    }
+                    else {
+                        this.order.products[product.id]++
+                    }
+                    product.space--;
                 },
                 canAddToCart(product) {
                     return product.space > 0;
+                },
+                canShoppingCart() {
+                    return Object.keys(this.order.products).length > 0
                 },
                 showCheckout() {
                     this.showProduct = !this.showProduct;
