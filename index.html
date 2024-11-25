@@ -1,9 +1,11 @@
 <html>
 <head>
     <title>After School Class</title>
+    
+  <!-- Add Font Awesome CDN for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    <script src="products.js"></script>
 </head>
 <body>
     <div id="app1">
@@ -27,8 +29,8 @@
                     <p>Spaces: {{ product.space }}</p>
                     <button v-on:click='addToCart(product)' v-if='canAddToCart(product)'>Add to cart</button>
                     <button disabled='disabled' v-else>Add to cart</button>
-                    <span v-if='product.space === cartCount(product.id)'>All out!</span>
-                    <span v-else-if="product.space - cartCount(product.id) < 5">Only {{ product.space - cartCount(product.id) }} left!</span>
+                    <span v-if='product.space === 0'>All out!</span>
+                    <span v-else-if="product.space < 5">Only {{ product.space }} left!</span>
                     <span v-else>Buy now!</span>
                     <div>
                         <span v-for='n in product.rating'>★</span>
@@ -84,56 +86,117 @@
     </div>
 
     <script type="text/javascript">
-    let app1 = new Vue({
-        el: '#app1',
-        data: {
-            sitename: "After School Class",
-            showProduct: true,
-            order: {
-                firstName: '',
-                lastName: '',
-                address: '',
-                city: '',
-                zip: '',
-                state: '',
-                method: 'Home',
-                sendGift: 'Send as a gift',
-                dontSendGift: 'Do not send as a gift'
+        let app1 = new Vue({
+            el: '#app1',
+            data: {
+                sitename: "After School Class",
+                showProduct: true,
+                order: {
+                    firstName: '',
+                    lastName: '',
+                    address: '',
+                    city: '',
+                    zip: '',
+                    state: '',
+                    method: 'Home',
+                    sendGift: 'Send as a gift',
+                    dontSendGift: 'Do not send as a gift'
+                },
+                states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
+                products: [], // 用來儲存從後端加載的產品數據
+                cart: [] // array to store items in shopping cart
             },
-            states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
-            products: products,
-            cart: [] // array to store items in shopping cart
-        },
-        computed: {
-            cartItemCount: function() {
-                return this.cart.length || "";
-            }
-        },
-        methods: {
-            addToCart(product) {
-                this.cart.push(product.id);
-                product.space--; // Reduce the space of the specific product
+            computed: {
+                cartItemCount: function () {
+                    return this.cart.length || "";
+                }
             },
-            canAddToCart(product) {
-                return product.space > this.cartCount(product.id);
-            },
-            showCheckout() {
-                this.showProduct = !this.showProduct; // Toggle checkout visibility
-            },
-            submitForm() {
-                alert('Order submitted!');
-            },
-            cartCount(id) {
-                let count = 0;
-                for(let i = 0; i < this.cart.length; i++) {
-                    if (this.cart[i] === id) {
-                    count++;
+            methods: {
+                // 使用 Fetch API 加載產品數據
+                async fetchProducts() {
+                    try {
+                        const response = await fetch('http://localhost:3000/collections/Products');
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch products');
+                        }
+                        this.products = await response.json(); // 將數據轉換為 JSON 並賦值給 products
+                    } catch (error) {
+                        console.error("Failed to load products:", error);
+                    }
+                },
+                addToCart(product) {
+                    this.cart.push(product.id);
+                    product.space--; // Reduce the space of the specific product
+                },
+                canAddToCart(product) {
+                    return product.space > 0;
+                },
+                showCheckout() {
+                    this.showProduct = !this.showProduct; // Toggle checkout visibility
+                },
+                // submitForm() {
+                //     alert('Order submitted!');
+                // },
+                cartCount(id) {
+                    let count = 0;
+                    for (let i = 0; i < this.cart.length; i++) {
+                        if (this.cart[i] === id) {
+                            count++;
+                        }
+                    }
+                    return count;
+                },
+                async submitForm() {
+                    try {
+                        const response = await fetch('http://localhost:3000/collections/Orders', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                Name: this.order.firstName,
+                                lastName: this.order.lastName,
+                                address: this.order.address,
+                                city: this.order.city,
+                                zip: this.order.zip,
+                                state: this.order.state,
+                                method: this.order.method,
+                                gift: this.order.gift,
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to place order');
+                        }
+
+                        const newOrder = await response.json(); // 得到新增的訂單數據
+
+                        alert(`Order placed successfully! Order ID: ${newOrder._id}`);
+                        this.resetOrderForm(); // 提交成功後清空表單
+                    } catch (error) {
+                        console.error("Failed to place order:", error);
+                        alert('Failed to place order. Please try again.');
+                    }
+                },
+                // 重置訂單表單
+                resetOrderForm() {
+                    this.order = {
+                        firstName: '',
+                        lastName: '',
+                        address: '',
+                        city: '',
+                        zip: '',
+                        state: '',
+                        method: 'Home',
+                        gift: false,
                     }
                 }
-                return count;
+                
+            },
+            mounted() {
+                this.fetchProducts();
             }
-        }
-    });
+        });
     </script>
 </body>
 </html>
