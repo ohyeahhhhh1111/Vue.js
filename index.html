@@ -54,7 +54,7 @@
 
             <!-- Product List -->
             <div v-if="showProduct">
-                <div v-for="product in products" :key="product.id">
+                <div v-for="product in this.products" :key="product.id">
                     <h2 v-text="product.title"></h2>
                     <figure>
                         <img v-bind:src="product.image" style="width: 300px; height: auto;">
@@ -62,7 +62,7 @@
                     <p>Location: {{ product.location }}</p>
                     <p>Price: {{ product.price }}</p>
                     <p>Spaces: {{ product.space }}</p>
-                    <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">Add to cart</button>
+                    <button v-on:click="addToCart(product.id)" v-if="canAddToCart(product)">Add to cart</button>
                     <button disabled="disabled" v-else>Add to cart</button>
                     <span v-if="product.space === 0">All out!</span>
                     <span v-else-if="product.space < 5">Only {{ product.space }} left!</span>
@@ -108,7 +108,15 @@
                 <p>State: {{ order.state }}</p>
                 <p>Gift?: {{ order.gift }}</p>
                 <p>Method: {{ order.method }}</p>
-                <button v-on:click="submitForm">Place Order</button>
+                <div v-for="(buy_space, buy_product) in this.order.products" :key="buy_product">
+                    <h2 v-text=OrderProductName(buy_product)></h2>
+                    <figure>
+                        <img v-bind:src="OrderProductImage(buy_product)" style="width: 300px; height: auto;">
+                    </figure>
+                    <p>Price: {{OrderProductPrice(buy_product)}}</p>
+                    <p>Spaces: {{buy_space}}</p>
+                </div>
+                <button v-on:click="submitForm">Checkout</button>
             </div>
         </main>
     </div>
@@ -132,7 +140,7 @@
                     products: {},
                 },
                 states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
-                products: [], 
+                products: [],
                 cart: [],
                 visibleOptions: {
                     subject: false,
@@ -162,15 +170,17 @@
                         console.error("Failed to load products:", error);
                     }
                 },
-                addToCart(product) {
-                    this.cart.push(product.id);
-                    if (!this.order.products.hasOwnProperty(product.id)) {
-                        this.order.products[product.id] = 1
+                addToCart(id) {
+                    this.cart.push(id)
+                    console.log(id)
+                    if (id in this.order.products) {
+                        this.order.products[id]++
                     }
                     else {
-                        this.order.products[product.id]++
+                        this.order.products[id] = 1
                     }
-                    product.space--;
+                    const index = this.CheckProductid(id)
+                    this.products[index].space--
                 },
                 canAddToCart(product) {
                     return product.space > 0;
@@ -181,19 +191,35 @@
                 showCheckout() {
                     this.showProduct = !this.showProduct;
                 },
-                async sort(field, order) {
-                    try {
-                        uri = 'http://localhost:3000/collections/Products/10/' + field + "/" + order
-                        const response = await fetch(uri);
-                        if (!response.ok) {
-                            throw new Error('Failed to fetch products');
+                sort(attribute, order) {
+                    this.products.sort((a, b) => {
+                        if (order === 'asc') {
+                            return a[attribute] > b[attribute] ? 1 : -1;
+                        } else {
+                            return a[attribute] < b[attribute] ? 1 : -1;
                         }
-                        this.products = await response.json();
-                    } catch (error) {
-                        console.error("Failed to load products:", error);
+                    });
+                },
+                CheckProductid(id) {
+                    for (let index = 0; index < this.products.length; index++) {
+                        // const element = array[index];
+                        if(id == this.products[index].id) {
+                            return index
+                        }
                     }
                 },
-                
+                OrderProductName(id) {
+                    const index = this.CheckProductid(id)
+                    return this.products[index].title
+                },
+                OrderProductPrice(id) {
+                    const index = this.CheckProductid(id)
+                    return this.products[index].price
+                },
+                OrderProductImage(id) {
+                    const index = this.CheckProductid(id)
+                    return this.products[index].image
+                },
                 async submitForm() {
                     try {
                         const response = await fetch('http://localhost:3000/collections/Orders', {
