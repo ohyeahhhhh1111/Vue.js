@@ -4,6 +4,13 @@
     <title>After School Class</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
+    <style>
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 </head>
 <body>
@@ -22,8 +29,11 @@
         </header>
 
         <main>
-            <!-- Sorting Buttons -->
-            <div class="container">
+
+            <!-- Product List -->
+            <div v-if="showProduct">
+                <!-- Sorting Buttons -->
+                <div class="container">
                 <br>
                 <div>
                     <button v-on:click="toggleOptions('subject')">Subject</button>
@@ -50,10 +60,7 @@
                       <button v-on:click="sort('space', 'desc')">Desc</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Product List -->
-            <div v-if="showProduct">
+                </div>
                 <div v-for="product in this.products" :key="product.id">
                     <h2 v-text="product.title"></h2>
                     <figure>
@@ -76,50 +83,58 @@
 
             <!-- Checkout Form -->
             <div v-else>
-                <h2>Checkout</h2>
-                <p><strong>First Name:</strong> <input v-model.trim="order.firstName" /></p>
-                <p><strong>Last Name:</strong> <input v-model.trim="order.lastName" /></p>
-                <p><strong>Address:</strong> <input v-model="order.address"/></p>
-                <p><strong>City:</strong> <input v-model="order.city"/></p>
-                <p>
-                    <strong>State:</strong>
-                    <select v-model="order.state">
-                        <option disabled value="">State</option>
-                        <option v-for="(state, key) in states" :value="state">{{ key }}</option>
-                    </select>
-                </p>
-                <p><strong>Zip/Postal Code:</strong> <input v-model.number="order.zip" type="number"/></p>
-                <p>
-                    <input type="checkbox" id="gift" value="true" v-model="order.gift" />
-                    <label for="gift">Ship As Gift?</label>
-                </p>
-                <p>
-                    <input type="radio" id="home" value="Home" v-model="order.method" />
-                    <label for="home">Home</label>
-                    <input type="radio" id="business" value="Business" v-model="order.method" />
-                    <label for="business">Business</label>
-                </p>
-                <h2>Order Information</h2>
-                <p>First Name: {{ order.firstName }}</p>
-                <p>Last Name: {{ order.lastName }}</p>
-                <p>Address: {{ order.address }}</p>
-                <p>City: {{ order.city }}</p>
-                <p>Zip: {{ order.zip }}</p>
-                <p>State: {{ order.state }}</p>
-                <p>Gift?: {{ order.gift }}</p>
-                <p>Method: {{ order.method }}</p>
-                <div v-for="(buy_space, buy_product) in this.order.products" :key="buy_product">
-                    <h2 v-text=OrderProductName(buy_product)></h2>
-                    <figure>
-                        <img v-bind:src="OrderProductImage(buy_product)" style="width: 300px; height: auto;">
-                    </figure>
-                    <p>Price: {{OrderProductPrice(buy_product)}}</p>
-                    <p>Spaces: {{buy_space}}</p>
-                    <button v-on:click="removeShoppingCart(buy_product)">Remove</button>
+                <form @submit.prevent="handleSubmit">
+                    <h2>Checkout</h2>
+                    <p><strong>Full Name:</strong>
+                        <input 
+                        type="text" 
+                        id="Ordername" 
+                        v-model="order.name" 
+                        @input="validateName" 
+                        placeholder="Enter your name">
+                    </p>
+                    <div class="error" v-if="nameError">{{ nameError }}</div>
+                    <p><strong>Phonenumber:</strong>
+                        <input 
+                        type="text" 
+                        id="Orderphone" 
+                        v-model="order.phonenumber" 
+                        @input="validatePhone" 
+                        placeholder="Enter your phone number">
+                    </p>
+                    <div class="error" v-if="phoneError">{{ phoneError }}</div>
+                    <p><strong>Address:</strong> <input id="Orderaddress" v-model="order.address"/></p>
+                    <p><strong>City:</strong> <input id="Ordercity" v-model="order.city"/></p>
+                    <p>
+                        <input type="checkbox" id="Ordergift" value="true" v-model="order.gift" />
+                        <label for="gift">Ship As Gift?</label>
+                    </p>
+                    <p>
+                        <input type="radio" id="Orderhome" value="Home" v-model="order.method" />
+                        <label for="home">Home</label>
+                        <input type="radio" id="Orderbusiness" value="Business" v-model="order.method" />
+                        <label for="business">Business</label>
+                    </p>
+                    <h2>Order Information</h2>
+                    <p>FullName: {{ order.name }}</p>
+                    <p>Phonenumber: {{order.phonenumber}}</p>
+                    <p>Address: {{ order.address }}</p>
+                    <p>City: {{ order.city }}</p>
+                    <p>Gift?: {{ order.gift }}</p>
+                    <p>Method: {{ order.method }}</p>
+                    <div v-for="(buy_space, buy_product) in this.order.products" :key="buy_product">
+                        <h2 v-text=OrderProductName(buy_product)></h2>
+                        <figure>
+                            <img v-bind:src="OrderProductImage(buy_product)" style="width: 300px; height: auto;">
+                        </figure>
+                        <p>Price: {{OrderProductPrice(buy_product)}}</p>
+                        <p>Spaces: {{buy_space}}</p>
+                        <button type="button" v-on:click="removeShoppingCart(buy_product)">Remove</button>
+                        <br>
+                    </div>
                     <br>
-                </div>
-                <br>
-                <button v-on:click="submitForm">Checkout</button>
+                    <button type="submit">Checkout</button>
+                </form>
             </div>
         </main>
     </div>
@@ -132,17 +147,16 @@
                 sitename: "After School Class",
                 showProduct: true,
                 order: {
-                    firstName: '',
-                    lastName: '',
+                    name: '',
+                    phonenumber: '',
                     address: '',
                     city: '',
-                    zip: '',
-                    state: '',
                     method: 'Home',
                     gift: false,
                     products: {},
                 },
-                states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
+                nameError: "",
+                phoneError: "",
                 products: [],
                 visibleOptions: {
                     subject: false,
@@ -240,6 +254,41 @@
                     const index = this.CheckProductid(id)
                     return this.products[index].image
                 },
+                // 驗證名稱輸入
+                validateName() {
+                    const nameRegex = /^[a-zA-Z]*$/; // 只允許字母
+                    if (!nameRegex.test(this.order.name)) {
+                        this.nameError = "Name can only contain letters.";
+                    } else {
+                        this.nameError = "";
+                    }
+                },
+                // 驗證電話輸入
+                validatePhone() {
+                    const phoneRegex = /^[0-9]*$/; // 只允許數字
+                    if (!phoneRegex.test(this.order.phonenumber)) {
+                        this.phoneError = "Phone number can only contain digits.";
+                    } else {
+                        this.phoneError = "";
+                    }
+                },
+                handleSubmit() {
+                    // console.log("123")
+                    this.validateName();
+                    this.validatePhone();
+                    if (this.nameError || this.phoneError) {
+                        alert("Please fix the errors before submitting.");
+                        return;
+                    }
+
+                    if (!this.order.name || !this.order.phonenumber) {
+                        alert("All fields are required.");
+                        return;
+                    }
+
+                    this.submitForm()
+                    alert("Form submitted successfully!");
+                },
                 async submitForm() {
                     try {
                         const response = await fetch('http://localhost:3000/collections/Orders', {
@@ -248,23 +297,20 @@
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                Name: this.order.firstName,
-                                lastName: this.order.lastName,
+                                Name: this.order.name,
+                                Phonenumber: this.order.phonenumber,
                                 address: this.order.address,
                                 city: this.order.city,
-                                zip: this.order.zip,
-                                state: this.order.state,
                                 method: this.order.method,
                                 gift: this.order.gift,
+                                products: this.order.products
                             })
                         });
-
                         if (!response.ok) {
                             throw new Error('Failed to place order');
                         }
-
-                        const newOrder = await response.json(); 
-                        alert(`Order placed successfully! Order ID: ${newOrder._id}`);
+                        // const newOrder = await response.json(); 
+                        alert(`Order placed successfully!`);
                         this.resetOrderForm();
                     } catch (error) {
                         console.error("Failed to place order:", error);
@@ -272,15 +318,16 @@
                     }
                 },
                 resetOrderForm() {
+                    this.showProduct = true
+                    this.fetchProducts()
                     this.order = {
-                        firstName: '',
-                        lastName: '',
+                        Name: '',
+                        Phonenumber: '',
                         address: '',
                         city: '',
-                        zip: '',
-                        state: '',
                         method: 'Home',
                         gift: false,
+                        products: []
                     }
                 }
             },
