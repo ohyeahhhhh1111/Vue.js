@@ -11,7 +11,7 @@
         <header>
             <h1>{{ sitename }}</h1>
             <button v-on:click="showCheckout" v-if="canShoppingCart()">
-                {{ cartItemCount }}
+                {{ cartItemCount() }}
                 <span class="fas fa-cart-plus"></span>
                 Shopping Cart
             </button>
@@ -115,7 +115,10 @@
                     </figure>
                     <p>Price: {{OrderProductPrice(buy_product)}}</p>
                     <p>Spaces: {{buy_space}}</p>
+                    <button v-on:click="removeShoppingCart(buy_product)">Remove</button>
+                    <br>
                 </div>
+                <br>
                 <button v-on:click="submitForm">Checkout</button>
             </div>
         </main>
@@ -141,7 +144,6 @@
                 },
                 states: ['Alabama', 'Alaska', 'Arizona', 'California', 'Nevada'],
                 products: [],
-                cart: [],
                 visibleOptions: {
                     subject: false,
                     location: false,
@@ -150,11 +152,20 @@
                 }
             },
             computed: {
-                cartItemCount: function () {
-                    return this.cart.length || "";
-                }
             },
             methods: {
+                cartItemCount() {
+                    const itemNum = Object.values(this.order.products)
+                    // console.log(itemNum[0])
+                    let Num = 0
+                    for (let index = 0; index < itemNum.length; index++) {
+                        Num += itemNum[index]
+                    }
+                    if(Num == 0) {
+                        Num = ""
+                    }
+                    return Num;
+                },
                 toggleOptions(category) {
                     // 如果點擊相同按鈕則關閉，否則切換到新按鈕
                     this.active = this.active === category ? null : category;
@@ -170,8 +181,17 @@
                         console.error("Failed to load products:", error);
                     }
                 },
+                removeShoppingCart(id){
+                    const index = this.CheckProductid(id)
+                    const Dontbuy = this.order.products[id]
+                    delete this.order.products[id]
+                    this.products[index].space += Dontbuy
+                    if (this.cartItemCount() === "") {
+                        this.showProduct = true
+                    }
+                    this.fetchProducts()
+                },
                 addToCart(id) {
-                    this.cart.push(id)
                     console.log(id)
                     if (id in this.order.products) {
                         this.order.products[id]++
