@@ -187,7 +187,7 @@
                 },
                 async fetchProducts() {
                     try {
-                        const response = await fetch('http://localhost:3000/collections/Products');
+                        const response = await fetch('https://back-end-e0py.onrender.com/collections/Products');
                         if (!response.ok) {
                             throw new Error('Failed to fetch products');
                         }
@@ -292,7 +292,7 @@
                 },
                 async submitForm() {
                     try {
-                        const response = await fetch('http://localhost:3000/collections/Orders', {
+                        const response = await fetch('https://back-end-e0py.onrender.com/collections/Orders', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -343,7 +343,7 @@
                     delete updatedProduct._id
                     // console.log(productId)
                     try {
-                        const response = await fetch(`http://localhost:3000/collections/Products/${_id}`, {
+                        const response = await fetch(`https://back-end-e0py.onrender.com/collections/Products/${_id}`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
