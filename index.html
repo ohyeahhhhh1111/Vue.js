@@ -35,6 +35,7 @@
                 <!-- Sorting Buttons -->
                 <div class="container">
                 <br>
+
                 <div>
                     <button v-on:click="toggleOptions('subject')">Subject</button>
                     <button v-on:click="toggleOptions('location')">Location</button>
@@ -309,7 +310,13 @@
                         if (!response.ok) {
                             throw new Error('Failed to place order');
                         }
-                        // const newOrder = await response.json(); 
+                        // const newOrder = await response.json();
+                        const orderkeys = Object.keys(this.order.products)  
+                        for (let orderID = 0; orderID < orderkeys.length; orderID++) {
+                            let index = this.CheckProductid(orderkeys[orderID])
+                            console.log(index)
+                            this.updateProduct(index)
+                        }
                         alert(`Order placed successfully!`);
                         this.resetOrderForm();
                     } catch (error) {
@@ -328,6 +335,31 @@
                         method: 'Home',
                         gift: false,
                         products: []
+                    }
+                },
+                async updateProduct(productId) {
+                    const updatedProduct = this.products[productId]
+                    _id = updatedProduct._id
+                    delete updatedProduct._id
+                    // console.log(productId)
+                    try {
+                        const response = await fetch(`http://localhost:3000/collections/Products/${_id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(updatedProduct)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to update product');
+                        }
+
+                        alert('Product updated successfully!');
+                        this.fetchProducts(); // 重新載入產品清單
+                    } catch (error) {
+                        console.error(error);
+                        alert('Failed to update product.');
                     }
                 }
             },
